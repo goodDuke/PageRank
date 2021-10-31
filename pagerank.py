@@ -111,11 +111,7 @@ def sample_pagerank(corpus, damping_factor, n):
     for page in sample_dict:
         pagerank_dict.update({page: sample_dict[page] / n})
     
-    print(pagerank_dict)
-        
-
-        
-
+    return pagerank_dict
 
 
 def iterate_pagerank(corpus, damping_factor):
