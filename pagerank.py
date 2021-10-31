@@ -57,11 +57,16 @@ def transition_model(corpus, page, damping_factor):
     linked to by `page`. With probability `1 - damping_factor`, choose
     a link at random chosen from all pages in the corpus.
     """
+
+    # Calculate the probability of choosing a random page from the corpus
     random_probability = (1 - damping_factor) / len(corpus)
-    pages_linked_percentage = damping_factor / len(corpus[page]) + random_probability
+    # Calculate the probability of choosing a linked page
+    pages_linked_probability = damping_factor / len(corpus[page]) + random_probability
+    
     probability_dict = {}
+    # Add the pages and their probabilities to the dictionary
     for p in corpus[page]:
-        probability_dict.update({p: pages_linked_percentage})
+        probability_dict.update({p: pages_linked_probability})
     
     for p in corpus:
         if p not in probability_dict:
@@ -80,12 +85,37 @@ def sample_pagerank(corpus, damping_factor, n):
     their estimated PageRank value (a value between 0 and 1). All
     PageRank values should sum to 1.
     """
-    '''
-    print(corpus)
-    for page in corpus:
-        print("\n" + page)
-        transition_model(corpus, page, damping_factor)
-    '''
+
+    sample_page = random.choice(list(corpus))
+
+    # Dictionary where keys correspond to pages and the values correspond 
+    # to the number of times a page was choosen as sample
+    sample_dict = {sample_page: 1}
+    for sample in range(1, n):    
+        page_list = []
+        probability_list = []
+        transition_dict = transition_model(corpus, sample_page, damping_factor)
+
+        # Create the two lists needed for the random.choises() method
+        for page in transition_dict:
+            page_list.append(page)
+            probability_list.append(transition_dict[page])
+        
+        sample_page = random.choices(page_list, probability_list)[0]
+        if sample_page not in sample_dict:
+            sample_dict.update({sample_page: 1})
+        else:
+            sample_dict[sample_page] += 1
+    
+    pagerank_dict = {}
+    for page in sample_dict:
+        pagerank_dict.update({page: sample_dict[page] / n})
+    
+    print(pagerank_dict)
+        
+
+        
+
 
 
 def iterate_pagerank(corpus, damping_factor):
