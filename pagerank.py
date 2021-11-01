@@ -57,11 +57,10 @@ def transition_model(corpus, page, damping_factor):
     linked to by `page`. With probability `1 - damping_factor`, choose
     a link at random chosen from all pages in the corpus.
     """
-
     # Calculate the probability of choosing a random page from the corpus
     random_probability = (1 - damping_factor) / len(corpus)
     # Calculate the probability of choosing a linked page
-    pages_linked_probability = damping_factor / len(corpus[page]) + random_probability
+    pages_linked_probability = damping_factor / NumLinks(corpus, page) + random_probability
     
     probability_dict = {}
     # Add the pages and their probabilities to the dictionary
@@ -85,7 +84,6 @@ def sample_pagerank(corpus, damping_factor, n):
     their estimated PageRank value (a value between 0 and 1). All
     PageRank values should sum to 1.
     """
-
     sample_page = random.choice(list(corpus))
 
     # Dictionary where keys correspond to pages and the values correspond 
@@ -101,12 +99,18 @@ def sample_pagerank(corpus, damping_factor, n):
             page_list.append(page)
             probability_list.append(transition_dict[page])
         
+        # Choose a sample randomly given the probabilities
         sample_page = random.choices(page_list, probability_list)[0]
+
+        # If the sample doesn't exist in the dictionary create a new key
+        # Otherwise increase the values of the page by one
         if sample_page not in sample_dict:
             sample_dict.update({sample_page: 1})
         else:
             sample_dict[sample_page] += 1
     
+    # Create a dictionary with a key for each page and its PageRank
+    # as the corresponding value
     pagerank_dict = {}
     for page in sample_dict:
         pagerank_dict.update({page: sample_dict[page] / n})
@@ -123,7 +127,60 @@ def iterate_pagerank(corpus, damping_factor):
     their estimated PageRank value (a value between 0 and 1). All
     PageRank values should sum to 1.
     """
-    raise NotImplementedError
+    N = len(corpus)
+    starting_probability = 1 / N
+    random_probability = (1 - damping_factor) / N
+
+    # Create a dictionary with a key for each page and set the 
+    # PageRank as 1/N where N the number of pages
+    iterate_dict = {}
+    for page in corpus:
+        iterate_dict.update({page: starting_probability})
+
+    flag = True
+    while(flag):
+        # Copy iterate_dict. It's going to be used to store the current probabilities 
+        # and check if a pagerank changes by more than 0.001
+        iterate_dict_copy = {page: probability for page, probability in iterate_dict.items()}
+        # Create a dictionary to store the difference of the current probability and the new probability
+        difference_dict = {}
+
+        # For each page p
+        for p in corpus:
+            sum = 0
+            # Find all the pages i that link to p
+            for i in corpus:
+                # Calculate the probability of choosing the link to page p
+                # and add it to a sum
+                if p in corpus[i]:
+                    sum += iterate_dict_copy[i] / NumLinks(corpus, i)
+                elif len(corpus[i]) == 0:
+                    sum += iterate_dict_copy[i] / N
+            
+            # Add the to conditions to find the PageRank for page p
+            iterate_dict[p] = random_probability + damping_factor * sum
+            difference_dict.update({p: abs(iterate_dict_copy[p] - iterate_dict[p])})
+            
+        # If flag remains false after the following if-statement,
+        # no PageRank value changes by more than 0.001
+        flag = False
+        for p in difference_dict:
+            if difference_dict[p] > 0.001:
+                flag = True
+
+    return iterate_dict
+
+
+def NumLinks(corpus, i):
+    '''
+    Calculate the number of links present on page i
+    '''
+    # If a page has no links is interpreted as having 
+    # one link for every page in the corpus
+    if len(corpus[i]) == 0:
+        return len(corpus)
+
+    return len(corpus[i])
 
 
 if __name__ == "__main__":
